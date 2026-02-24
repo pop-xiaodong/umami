@@ -1,5 +1,6 @@
 import clickhouse from '@/lib/clickhouse';
 import { EVENT_COLUMNS } from '@/lib/constants';
+import { getCustomFilter } from '@/lib/custom_filter';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
 import type { QueryFilters } from '@/lib/types';
@@ -16,6 +17,9 @@ export async function getWebsiteSessions(...args: [websiteId: string, filters: Q
 async function relationalQuery(websiteId: string, filters: QueryFilters) {
   const { pagedRawQuery, parseFilters } = prisma;
   const { search } = filters;
+
+  const customFilterQuery = getCustomFilter(filters);
+
   const { filterQuery, dateQuery, cohortQuery, queryParams } = parseFilters({
     ...filters,
     websiteId,
@@ -30,8 +34,7 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
            or device ilike {{search}})`
     : '';
 
-  return pagedRawQuery(
-    `
+  const sql = `
     select
       session.session_id as "id",
       session.website_id as "websiteId",
@@ -57,6 +60,7 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
     ${dateQuery}
     ${filterQuery}
     ${searchQuery}
+    ${customFilterQuery}
     group by session.session_id, 
       session.website_id, 
       website_event.hostname, 
@@ -69,11 +73,9 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
       session.region, 
       session.city
     order by max(website_event.created_at) desc
-    `,
-    queryParams,
-    filters,
-    FUNCTION_NAME,
-  );
+    `;
+
+  return pagedRawQuery(sql, queryParams, filters, FUNCTION_NAME);
 }
 
 async function clickhouseQuery(websiteId: string, filters: QueryFilters) {

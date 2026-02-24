@@ -1,5 +1,6 @@
 import clickhouse from '@/lib/clickhouse';
 import { EVENT_COLUMNS, FILTER_COLUMNS, SESSION_COLUMNS } from '@/lib/constants';
+import { getCustomFilter } from '@/lib/custom_filter';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
 import type { QueryFilters } from '@/lib/types';
@@ -29,6 +30,9 @@ async function relationalQuery(
   const { type, limit = 500, offset = 0 } = parameters;
   let column = FILTER_COLUMNS[type] || type;
   const { parseFilters, rawQuery } = prisma;
+
+  const customFilterQuery = getCustomFilter(filters);
+
   const { filterQuery, joinSessionQuery, cohortQuery, queryParams } = parseFilters(
     {
       ...filters,
@@ -57,6 +61,7 @@ async function relationalQuery(
       and website_event.created_at between {{startDate}} and {{endDate}}
       and website_event.event_type != 2
     ${filterQuery}
+    ${customFilterQuery}
     group by 1 
     ${includeCountry ? ', 3' : ''}
     order by 2 desc

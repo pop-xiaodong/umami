@@ -1,4 +1,5 @@
 import clickhouse from '@/lib/clickhouse';
+import { getCustomFilter } from '@/lib/custom_filter';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
 import type { QueryFilters } from '@/lib/types';
@@ -15,6 +16,9 @@ export function getWebsiteEvents(...args: [websiteId: string, filters: QueryFilt
 async function relationalQuery(websiteId: string, filters: QueryFilters) {
   const { pagedRawQuery, parseFilters } = prisma;
   const { search } = filters;
+
+  const customFilterQuery = getCustomFilter(filters);
+
   const { filterQuery, dateQuery, cohortQuery, queryParams } = parseFilters({
     ...filters,
     websiteId,
@@ -57,6 +61,7 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
     where website_event.website_id = {{websiteId::uuid}}
     ${dateQuery}
     ${filterQuery}
+    ${customFilterQuery}
     ${searchQuery}
     order by website_event.created_at desc
     `,

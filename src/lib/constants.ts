@@ -53,6 +53,8 @@ export const SESSION_COLUMNS = [
   'country',
   'city',
   'region',
+  'company',
+  'email',
 ];
 
 export const SEGMENT_TYPES = {
@@ -79,6 +81,8 @@ export const FILTER_COLUMNS = {
   event: 'event_name',
   tag: 'tag',
   eventType: 'event_type',
+  company: 'company',
+  email: 'email',
 };
 
 export const COLLECTION_TYPE = {

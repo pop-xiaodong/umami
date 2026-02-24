@@ -1,5 +1,6 @@
 import clickhouse from '@/lib/clickhouse';
 import { EVENT_TYPE } from '@/lib/constants';
+import { getCustomFilter } from '@/lib/custom_filter';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
 import type { QueryFilters } from '@/lib/types';
@@ -40,6 +41,9 @@ async function relationalQuery(
 ): Promise<AttributionResult> {
   const { model, type, currency } = parameters;
   const { rawQuery, parseFilters } = prisma;
+
+  const customFilterQuery = getCustomFilter(filters);
+
   const eventType = type === 'path' ? EVENT_TYPE.pageView : EVENT_TYPE.customEvent;
   const column = type === 'path' ? 'url_path' : 'event_name';
   const { filterQuery, joinSessionQuery, cohortQuery, queryParams } = parseFilters({
@@ -78,6 +82,7 @@ async function relationalQuery(
           and website_event.created_at between {{startDate}} and {{endDate}}
           and website_event.${column} = {{step}}
           ${filterQuery}
+          ${customFilterQuery}
         group by 1),`;
 
   const revenueEventQuery = `WITH events AS (
@@ -99,6 +104,7 @@ async function relationalQuery(
           and revenue.${column} = {{step}}
           and revenue.currency = {{currency}}
           ${filterQuery}
+          ${customFilterQuery}
         group by 1),`;
 
   function getModelQuery(model: string) {
@@ -243,6 +249,7 @@ async function relationalQuery(
         and website_event.created_at between {{startDate}} and {{endDate}}
         and website_event.${column} = {{step}}
         ${filterQuery}
+        ${customFilterQuery}
     `,
     queryParams,
   ).then(result => result?.[0]);

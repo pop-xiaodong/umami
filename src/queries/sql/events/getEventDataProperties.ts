@@ -1,4 +1,5 @@
 import clickhouse from '@/lib/clickhouse';
+import { getCustomFilter } from '@/lib/custom_filter';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
 import type { QueryFilters } from '@/lib/types';
@@ -19,6 +20,9 @@ async function relationalQuery(
   filters: QueryFilters & { propertyName?: string },
 ) {
   const { rawQuery, parseFilters } = prisma;
+
+  const customFilterQuery = getCustomFilter(filters);
+
   const { filterQuery, cohortQuery, joinSessionQuery, queryParams } = parseFilters(
     { ...filters, websiteId },
     {
@@ -41,6 +45,7 @@ async function relationalQuery(
     where event_data.website_id = {{websiteId::uuid}}
       and event_data.created_at between {{startDate}} and {{endDate}}
     ${filterQuery}
+    ${customFilterQuery}
     group by website_event.event_name, event_data.data_key
     order by 3 desc
     limit 500

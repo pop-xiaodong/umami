@@ -1,5 +1,6 @@
 import clickhouse from '@/lib/clickhouse';
 import { EVENT_COLUMNS } from '@/lib/constants';
+import { getCustomFilter } from '@/lib/custom_filter';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
 import type { QueryFilters } from '@/lib/types';
@@ -28,13 +29,15 @@ async function relationalQuery(
   filters: QueryFilters,
 ): Promise<WebsiteStatsData[]> {
   const { getTimestampDiffSQL, parseFilters, rawQuery } = prisma;
+
+  const customFilterQuery = getCustomFilter(filters);
+
   const { filterQuery, joinSessionQuery, cohortQuery, queryParams } = parseFilters({
     ...filters,
     websiteId,
   });
 
-  return rawQuery(
-    `
+  const sql = `
     select
       cast(coalesce(sum(t.c), 0) as bigint) as "pageviews",
       count(distinct t.session_id) as "visitors",
@@ -55,12 +58,12 @@ async function relationalQuery(
         and website_event.created_at between {{startDate}} and {{endDate}}
         and website_event.event_type != 2
         ${filterQuery}
+        ${customFilterQuery}
       group by 1, 2
     ) as t
-    `,
-    queryParams,
-    FUNCTION_NAME,
-  ).then(result => result?.[0]);
+  `;
+
+  return rawQuery(sql, queryParams, FUNCTION_NAME).then(result => result?.[0]);
 }
 
 async function clickhouseQuery(

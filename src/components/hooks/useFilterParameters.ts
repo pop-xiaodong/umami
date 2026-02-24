@@ -23,6 +23,8 @@ export function useFilterParameters() {
       search,
       segment,
       cohort,
+      company,
+      email,
     },
   } = useNavigation();
 
@@ -45,6 +47,8 @@ export function useFilterParameters() {
       search,
       segment,
       cohort,
+      company,
+      email,
     };
   }, [
     path,
@@ -66,5 +70,7 @@ export function useFilterParameters() {
     search,
     segment,
     cohort,
+    company,
+    email,
   ]);
 }

@@ -1,4 +1,6 @@
+import { join } from 'path';
 import clickhouse from '@/lib/clickhouse';
+import { getCustomFilter } from '@/lib/custom_filter';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
 import type { QueryFilters } from '@/lib/types';
@@ -33,6 +35,9 @@ async function relationalQuery(
 ): Promise<RevenueResult> {
   const { startDate, endDate, unit = 'day', timezone = 'utc', currency } = parameters;
   const { getDateSQL, rawQuery, parseFilters } = prisma;
+
+  let customFilterQuery = getCustomFilter(filters);
+
   const { queryParams, filterQuery, cohortQuery, joinSessionQuery } = parseFilters({
     ...filters,
     websiteId,
@@ -50,6 +55,10 @@ async function relationalQuery(
         and website_event.created_at between {{startDate}} and {{endDate}}`
     : '';
 
+  if (!joinQuery) {
+    customFilterQuery = '';
+  }
+
   const chart = await rawQuery(
     `
     select
@@ -64,6 +73,7 @@ async function relationalQuery(
       and revenue.created_at between {{startDate}} and {{endDate}}
       and revenue.currency = upper({{currency}})
       ${filterQuery}
+      ${customFilterQuery}
     group by  x, t
     order by t
     `,
@@ -85,6 +95,7 @@ async function relationalQuery(
       and revenue.created_at between {{startDate}} and {{endDate}}
       and revenue.currency = upper({{currency}})
       ${filterQuery}
+      ${customFilterQuery}
     group by session.country
     `,
     queryParams,
@@ -104,6 +115,7 @@ async function relationalQuery(
       and revenue.created_at between {{startDate}} and {{endDate}}
       and revenue.currency = upper({{currency}})
       ${filterQuery}
+      ${customFilterQuery}
   `,
     queryParams,
   ).then(result => result?.[0]);

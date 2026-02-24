@@ -27,6 +27,8 @@ async function relationalQuery(websiteId: string, column: string, filters: Query
       and website_event.referrer_domain != ''`;
   }
 
+  const isCompany = column === 'company';
+
   if (search) {
     if (decodeURIComponent(search).includes(',')) {
       searchQuery = `AND (${decodeURIComponent(search)
@@ -45,21 +47,36 @@ async function relationalQuery(websiteId: string, column: string, filters: Query
     }
   }
 
+  let sql = '';
+  if (isCompany) {
+    sql = `
+      select string_value as "value", count(*) as "count"
+      from session_data
+      where website_id = {{websiteId::uuid}}
+        and data_key = 'company_id'
+      group by 1
+      order by 2 desc
+      limit 10
+    `;
+  } else {
+    sql = `
+      select ${column} as "value", count(*) as "count"
+      from website_event
+      inner join session
+        on session.session_id = website_event.session_id
+          and session.website_id = website_event.website_id
+      where website_event.website_id = {{websiteId::uuid}}
+        and website_event.created_at between {{startDate}} and {{endDate}}
+        ${searchQuery}
+        ${excludeDomain}
+      group by 1
+      order by 2 desc
+      limit 10
+    `;
+  }
+
   return rawQuery(
-    `
-    select ${column} as "value", count(*) as "count"
-    from website_event
-    inner join session
-      on session.session_id = website_event.session_id
-        and session.website_id = website_event.website_id
-    where website_event.website_id = {{websiteId::uuid}}
-      and website_event.created_at between {{startDate}} and {{endDate}}
-      ${searchQuery}
-      ${excludeDomain}
-    group by 1
-    order by 2 desc
-    limit 10
-    `,
+    sql,
     {
       websiteId,
       startDate,

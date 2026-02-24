@@ -98,6 +98,16 @@ export function CompareTables({ websiteId }: { websiteId: string }) {
       label: formatMessage(labels.tags),
       path: renderPath('tag'),
     },
+    {
+      id: 'company',
+      label: 'labels.company',
+      path: renderPath('company'),
+    },
+    {
+      id: 'email',
+      label: 'labels.email',
+      path: renderPath('email'),
+    },
   ];
 
   const renderChange = ({ label, count }) => {

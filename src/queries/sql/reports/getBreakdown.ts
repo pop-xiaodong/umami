@@ -1,5 +1,6 @@
 import clickhouse from '@/lib/clickhouse';
 import { EVENT_TYPE, FILTER_COLUMNS, SESSION_COLUMNS } from '@/lib/constants';
+import { getCustomFilter } from '@/lib/custom_filter';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
 import type { QueryFilters } from '@/lib/types';
@@ -30,6 +31,9 @@ async function relationalQuery(
   filters: QueryFilters,
 ): Promise<BreakdownData[]> {
   const { getTimestampDiffSQL, parseFilters, rawQuery } = prisma;
+
+  const customFilterQuery = getCustomFilter(filters);
+
   const { startDate, endDate, fields } = parameters;
   const { filterQuery, joinSessionQuery, cohortQuery, queryParams } = parseFilters(
     {
@@ -67,6 +71,7 @@ async function relationalQuery(
       where website_event.website_id = {{websiteId::uuid}}
         and website_event.created_at between {{startDate}} and {{endDate}}
         ${filterQuery}
+        ${customFilterQuery}
       group by ${parseFieldsByName(fields)}, 
         website_event.session_id, website_event.visit_id
     ) as t

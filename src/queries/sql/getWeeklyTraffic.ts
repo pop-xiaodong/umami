@@ -1,5 +1,6 @@
 import clickhouse from '@/lib/clickhouse';
 import { EVENT_COLUMNS } from '@/lib/constants';
+import { getCustomFilter } from '@/lib/custom_filter';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
 import type { QueryFilters } from '@/lib/types';
@@ -16,6 +17,9 @@ export async function getWeeklyTraffic(...args: [websiteId: string, filters: Que
 async function relationalQuery(websiteId: string, filters: QueryFilters) {
   const timezone = 'utc';
   const { rawQuery, getDateWeeklySQL, parseFilters } = prisma;
+
+  const customFilterQuery = getCustomFilter(filters);
+
   const { filterQuery, joinSessionQuery, cohortQuery, queryParams } = parseFilters({
     ...filters,
     websiteId,
@@ -32,6 +36,7 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
     where website_event.website_id = {{websiteId::uuid}}
       and website_event.created_at between {{startDate}} and {{endDate}}
       ${filterQuery}
+      ${customFilterQuery}
     group by time
     order by 2
     `,

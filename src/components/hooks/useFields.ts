@@ -17,6 +17,8 @@ export function useFields() {
     { name: 'hostname', type: 'string', label: formatMessage(labels.hostname) },
     { name: 'tag', type: 'string', label: formatMessage(labels.tag) },
     { name: 'event', type: 'string', label: formatMessage(labels.event) },
+    { name: 'company', type: 'string', label: 'Company' },
+    // { name: 'email', type: 'string', label: 'labels.email' },
   ];
 
   return { fields };

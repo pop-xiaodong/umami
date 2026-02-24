@@ -1,5 +1,6 @@
 import clickhouse from '@/lib/clickhouse';
 import { EVENT_COLUMNS } from '@/lib/constants';
+import { getCustomFilter } from '@/lib/custom_filter';
 import { CLICKHOUSE, PRISMA, runQuery } from '@/lib/db';
 import prisma from '@/lib/prisma';
 import type { QueryFilters } from '@/lib/types';
@@ -16,6 +17,9 @@ export async function getPageviewStats(...args: [websiteId: string, filters: Que
 async function relationalQuery(websiteId: string, filters: QueryFilters) {
   const { timezone = 'utc', unit = 'day' } = filters;
   const { getDateSQL, parseFilters, rawQuery } = prisma;
+
+  const customFilterQuery = getCustomFilter(filters);
+
   const { filterQuery, cohortQuery, joinSessionQuery, queryParams } = parseFilters({
     ...filters,
     websiteId,
@@ -33,6 +37,7 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
       and website_event.created_at between {{startDate}} and {{endDate}}
       and website_event.event_type != 2
       ${filterQuery}
+      ${customFilterQuery}
     group by 1
     order by 1
     `,

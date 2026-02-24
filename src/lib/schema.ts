@@ -41,6 +41,8 @@ export const filterParams = {
   segment: z.uuid().optional(),
   cohort: z.uuid().optional(),
   eventType: z.coerce.number().int().positive().optional(),
+  company: z.string().optional(),
+  email: z.string().optional(),
 };
 
 export const searchParams = {
@@ -91,6 +93,8 @@ export const fieldsParam = z.enum([
   'hostname',
   'language',
   'event',
+  'company',
+  'email',
 ]);
 
 export const reportTypeParam = z.enum([

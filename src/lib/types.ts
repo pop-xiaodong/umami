@@ -90,6 +90,8 @@ export interface FilterParams {
   segment?: string;
   cohort?: string;
   compare?: string;
+  company?: string;
+  email?: string;
 }
 
 export interface SortParams {
