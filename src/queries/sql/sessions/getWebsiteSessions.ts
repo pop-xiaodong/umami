@@ -27,11 +27,13 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
   });
 
   const searchQuery = search
-    ? `and (distinct_id ilike {{search}}
+    ? `and (session.distinct_id ilike {{search}}
            or city ilike {{search}}
            or browser ilike {{search}}
            or os ilike {{search}}
-           or device ilike {{search}})`
+           or device ilike {{search}})
+           or sd_email.string_value ilike {{search}}
+           or sd_company.string_value ilike {{search}}`
     : '';
 
   const sql = `
@@ -47,6 +49,9 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
       session.country,
       session.region,
       session.city,
+      sd_email.string_value as "email",
+      sd_company.string_value as "companyId",
+
       min(website_event.created_at) as "firstAt",
       max(website_event.created_at) as "lastAt",
       count(distinct website_event.visit_id) as "visits",
@@ -56,6 +61,17 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
     ${cohortQuery}
     join session on session.session_id = website_event.session_id
       and session.website_id = website_event.website_id
+
+    left join session_data sd_email
+      on sd_email.session_id = website_event.session_id
+      and sd_email.website_id = website_event.website_id
+      and sd_email.data_key = 'email'
+
+    left join session_data sd_company
+      on sd_company.session_id = website_event.session_id
+      and sd_company.website_id = website_event.website_id
+      and sd_company.data_key = 'company_id'
+
     where website_event.website_id = {{websiteId::uuid}}
     ${dateQuery}
     ${filterQuery}
@@ -71,7 +87,9 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
       session.language, 
       session.country, 
       session.region, 
-      session.city
+      session.city,
+      sd_email.string_value,
+      sd_company.string_value
     order by max(website_event.created_at) desc
     `;
 

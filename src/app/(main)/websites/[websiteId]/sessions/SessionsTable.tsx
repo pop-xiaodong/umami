@@ -12,13 +12,15 @@ export function SessionsTable(props: DataTableProps) {
 
   return (
     <DataTable {...props}>
-      <DataColumn id="id" label={formatMessage(labels.session)} width="100px">
+      <DataColumn id="id" label={formatMessage(labels.session)} width="50px">
         {(row: any) => (
           <Link href={updateParams({ session: row.id })}>
             <Avatar seed={row.id} size={32} />
           </Link>
         )}
       </DataColumn>
+      <DataColumn id="email" label="Email" width="250px" />
+      <DataColumn id="companyId" label="CompanyId" width="140px" />
       <DataColumn id="visits" label={formatMessage(labels.visits)} width="80px" />
       <DataColumn id="views" label={formatMessage(labels.views)} width="80px" />
       <DataColumn id="country" label={formatMessage(labels.country)}>
