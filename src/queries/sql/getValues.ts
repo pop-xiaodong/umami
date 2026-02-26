@@ -53,7 +53,7 @@ async function relationalQuery(websiteId: string, column: string, filters: Query
       select string_value as "value", count(*) as "count"
       from session_data
       where website_id = {{websiteId::uuid}}
-        and data_key = 'company_id'
+        and data_key = 'company_name'
       group by 1
       order by 2 desc
       limit 10

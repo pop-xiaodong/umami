@@ -12,16 +12,15 @@ export function getCustomFilter(filters: QueryFilters) {
     // TODO:
     // parse company id
     const queryType = isCompany.split('.')[0];
-    console.log(queryType);
-    const companyId = isCompany.split('.').slice(1).join('.');
+    const companyName = isCompany.split('.').slice(1).join('.');
     customFilterQuery = `
       and exists (
       select 1 
       from session_data sd
       where sd.session_id = website_event.session_id 
         and sd.website_id = website_event.website_id
-        and sd.data_key = 'company_id'
-        and sd.string_value = '${companyId}'
+        and sd.data_key = 'company_name'
+        and sd.string_value = '${companyName}'
     )
     `;
   }

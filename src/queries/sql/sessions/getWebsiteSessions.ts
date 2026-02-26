@@ -33,7 +33,8 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
            or os ilike {{search}}
            or device ilike {{search}})
            or sd_email.string_value ilike {{search}}
-           or sd_company.string_value ilike {{search}}`
+           or sd_company_id.string_value ilike {{search}}
+           or sd_company_name.string_value ilike {{search}}`
     : '';
 
   const sql = `
@@ -50,7 +51,8 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
       session.region,
       session.city,
       sd_email.string_value as "email",
-      sd_company.string_value as "companyId",
+      sd_company_id.string_value as "companyId",
+      sd_company_name.string_value as "companyName",
 
       min(website_event.created_at) as "firstAt",
       max(website_event.created_at) as "lastAt",
@@ -67,10 +69,15 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
       and sd_email.website_id = website_event.website_id
       and sd_email.data_key = 'email'
 
-    left join session_data sd_company
-      on sd_company.session_id = website_event.session_id
-      and sd_company.website_id = website_event.website_id
-      and sd_company.data_key = 'company_id'
+    left join session_data sd_company_id
+      on sd_company_id.session_id = website_event.session_id
+      and sd_company_id.website_id = website_event.website_id
+      and sd_company_id.data_key = 'company_id'
+    
+    left join session_data sd_company_name
+      on sd_company_name.session_id = website_event.session_id
+      and sd_company_name.website_id = website_event.website_id
+      and sd_company_name.data_key = 'company_name'
 
     where website_event.website_id = {{websiteId::uuid}}
     ${dateQuery}
@@ -89,7 +96,8 @@ async function relationalQuery(websiteId: string, filters: QueryFilters) {
       session.region, 
       session.city,
       sd_email.string_value,
-      sd_company.string_value
+      sd_company_id.string_value,
+      sd_company_name.string_value
     order by max(website_event.created_at) desc
     `;
 
